@@ -14,3 +14,5 @@ See the [Relational data](https://r4ds.had.co.nz/relational-data.html) chapter i
 [introduction-to-gis-r](https://atlan.com/courses/introduction-to-gis-r/lesson2-manipulating-geospatial-data/)
 
 [Units of Measurement for R Vectors: an Introduction](https://cran.r-project.org/web/packages/units/vignettes/units.html#setting-units-unit-conversion)
+
+For more information on simplification, see [Section 5.2.1](https://geocompr.robinlovelace.net/geometric-operations.html) of *Geocomputation with R*.
