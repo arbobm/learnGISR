@@ -1,6 +1,8 @@
 # learnGISR
 primeiros scripts no aprendizado de SIG no R
 
+[FREE ONLINE COURSE - Introduction to GIS - Manipulating and Mapping Geospatial Data in R](https://atlan.com/courses/introduction-to-gis-r/overview/)
+
 # fonte do aprendizado
 
 ## Livros
