@@ -2,8 +2,10 @@
 ## https://atlan.com/courses/introduction-to-gis-r/lesson3-static-maps/
 ## introduction-to-gis-r
 
-# This lesson introduces how to use some of the most well-known R packages to create static maps, such as tmap and ggplot2.
-# We’ll also explore a few other packages like cartogram, geogrid and geofacet for some more unique spatial visualizations. 
+# This lesson introduces how to use some of the most well-known R packages to create static maps, such
+#as tmap and ggplot2.
+# We’ll also explore a few other packages like cartogram, geogrid and geofacet for some more unique 
+#spatial visualizations. 
 
 ## pacotes necessários---- 
 # install.packages("tmap") #demoradinho
@@ -11,12 +13,17 @@
 # install.packages("cartogram")
 # install.packages("geogrid")
 # install.packages("geofacet")
+# install.packages("ggrepael")
+# install.packages("stringr")
 
 ### Resources on Visualizing Geospatial Data----
 
-# Before diving into different R packages for mapping, let's review a few excellent resources that will help you get started. 
+# Before diving into different R packages for mapping, let's review a few excellent resources that will
+#help you get started. 
 
-# Recent advances in software have made many different types of geospatial data visualizations — such as choropleths, dot density maps and cartograms — easily available. However, the correct visualization often begins with the type of data you have. 
+# Recent advances in software have made many different types of geospatial data visualizations — such
+#as choropleths, dot density maps and cartograms — easily available. However, the correct 
+#visualization often begins with the type of data you have. 
 
 # Nature of our data. Is the data numeric? If so, is it a raw count, such as population
 # or is it standardized, such as population density?
@@ -164,5 +171,167 @@ print(inset, vp = viewport(0.24, 0.18, width = 0.2, height = 0.4)) # como fazer 
 
 
 ### Faceted Maps----
-# retomar em https://atlan.com/courses/introduction-to-gis-r/lesson3-static-maps/
+# tmap also supports the creation of faceted maps, or small multiples. They can be useful for attributes 
+#with a fairly small number of levels. For instance, if we have population data for a few years, we could 
+#show a progression over time.
+
+# The free.coords argument controls whether to show only the faceted map area or instead highlight the 
+#facet’s place in the original map. 
+
+# There is no inherent order to regions, but it's useful to impose one. Below we've ordered the facets in 
+#a roughly counter-clockwise order starting from "Northern". To do this, it helps to first make region an 
+#ordered factor. 
+
+# create custom labels for log scale
+library(stringr)
+gdp_seq <- 10 ^ (seq(2.8, 4.0, by = 0.2))
+gdp_vec <- scales::dollar(round(gdp_seq))
+
+my_labels <- vector(mode = "character", length = 6)
+for(i in seq_along(1:6)){
+  my_labels[i] = stringr::str_c(gdp_vec[i], " to ", gdp_vec[i + 1])
+}
+
+simp_sf %>% 
+  mutate(
+    log_pc_usd = log10(per_capita_gdp_usd),
+    region_fac = factor(region, levels = c("Northern", "Western", "Southern",
+                                           "Central", "Eastern", "Northeastern",
+                                           "Arabian Sea", "Bay of Bengal")) 
+  ) %>%
+  filter(!state_ut %in% c("Andaman & Nicobar Islands", 
+                          "Lakshadweep")) %>% 
+  tm_shape() +
+  tm_borders(lwd = 0.5, col = "white") +
+  tm_fill(col = 'log_pc_usd', title = '', palette = "viridis",
+          labels = my_labels) +
+  tm_facets(by = "region_fac", nrow = 2, free.coords = TRUE) +
+  tm_layout(
+    main.title = "Per Capita GDP by Region",
+    main.title.size = 1,
+    main.title.position = "center",
+    legend.outside.position = "right"
+  )
+
+
+
+# NOTE: The free.coords argument of tm_facets() is set to TRUE. If it was instead 
+#set to FALSE, the entire map of India would appear in each facet with the given 
+#region highlighted.
+
+View(simp_sf)
+glimpse(simp_sf)
+# esse comando pra criar a figura em facets "cria" duas colunas novas usando o mutate
+#sem de fato adicionar essas colunas em simp_sf :D
+# comparar com:
+# a <- simp_sf %>% 
+# mutate(
+#   log_pc_usd = log10(per_capita_gdp_usd),
+#   region_fac = factor(region, levels = c("Northern", "Western", "Southern",
+#                                          "Central", "Eastern", "Northeastern",
+#                                          "Arabian Sea", "Bay of Bengal")) 
+# )
+
+### Proportional Symbols Maps----
+
+pop_bubbles <- simp_sf %>% 
+  tm_shape() +
+  tm_polygons() +
+  tm_bubbles(col = "gold", size = "pop_2011", 
+             scale = 3, title.size = "") +
+  tm_text("abb", size = "pop_2011", root = 5,
+          legend.size.show = FALSE) +
+  tm_layout(
+    main.title = "Population (2011)",
+    main.title.position = c("center"),
+    main.title.size = 1,
+    legend.position = c("right", "bottom")   
+  )
+
+gdp_bubbles <- simp_sf %>% 
+  tm_shape() +
+  tm_polygons() +
+  tm_bubbles(col = "gold", size = "nominal_gdp_usd", 
+             scale = 3, title.size = "") +
+  tm_text("abb", size = "nominal_gdp_usd", root = 5,
+          legend.size.show = FALSE) +
+  tm_layout(
+    main.title = "Nominal GDP (USD)",
+    main.title.position = c("center"),
+    main.title.size = 1,
+    legend.position = c("right", "bottom") 
+  )
+
+tmap_arrange(pop_bubbles, gdp_bubbles)
+
+### geom_sf in ggplot2----
+
+# ggplot2 requires tidy data. Since spatial dataframes defined in the sf package are dataframes, it makes sense 
+#that we could expect to use ggplot2 to visualize sf objects. 
+# Recently, ggplot2 added support for sf objects with geom_sf(). The key advantage of geom_sf() is that tidyverse
+#users are already familiar with ggplot2 and its wider ecosystem of add-on packages. 
+
+
+# In the plot below, we want to add only the state name "Kerala" to the map. We could have done it with the 
+#annotate() function, but instead we created an sf object (also a dataframe) holding only the feature we wanted 
+#to annotate (Kerala). 
+
+# In order to do this successfully, however, we first need to find the geographic center of Kerala to know the 
+#point from which to draw the label. Geometric operations like calculating centroids, buffers and distance 
+#require a projected CRS as opposed to a geographic CRS, and so we've done so below using st_transform(). 
+
+#  With a geographic CRS, st_centroid() does produce a result, but it produces a warning that "st_centroid doesn't
+#give correct centroids for longitude/latitude data" because it assumes attributes are constant over geometries. 
+#The distance between longitudes, however, changes based on its given latitude. (Think of the distance between 
+#longitudes at the equator vs. at the North Pole.)
+
+# The question then becomes choosing an appropriate projected CRS. Viewing crs_data = rgdal::make_EPSG() shows 
+#thousands of options. We also searched for "India" at EPSG.io. Ultimately we chose a CRS with EPSG code 24343, 
+#which notes "# Kalianpur 1975 / UTM zone 43N" since UTM zone 43N covers Kerala. (You might also find Projection 
+#Wizard useful.)
+
+# Using this CRS, we were able to use st_transform() to project both sf objects onto the same projected CRS. 
+#Once that was done, we could add the Kerala label using geom_text_repel() like we'd normally do in ggplot2. 
+
+
+library(ggplot2)
+library(ggrepel)
+
+proj_sf <- simp_sf %>% 
+  st_transform(crs = 24343) %>% 
+  mutate(
+    CENTROID = purrr::map(geometry, st_centroid),
+    COORDS = purrr::map(CENTROID, st_coordinates),
+    COORDS_X = purrr::map_dbl(COORDS, 1),
+    COORDS_Y = purrr::map_dbl(COORDS, 2)
+  )
+
+kerala <- proj_sf %>% 
+  filter(state_ut == "Kerala")
+
+proj_sf %>%
+  filter(!state_ut %in% c("Daman & Diu", "Dadra & Nagar Haveli")) %>% 
+  ggplot() + 
+  geom_sf(aes(fill = sex_ratio), lwd = 0) +
+  geom_sf(fill = NA, color = "grey", lwd = 0.5) +
+  scale_fill_viridis_c("Sex Ratio", labels = scales::comma, option = "A") +
+  labs(
+    title = "Sex Ratio across Indian States",
+    caption = "Source: Wikipedia"
+  ) +
+  geom_text_repel(
+    data = kerala,
+    mapping = aes(x = COORDS_X, y = COORDS_Y, label = state_ut),
+    nudge_x = -0.5,
+    nudge_y = -1
+  ) +
+  scale_y_continuous(NULL) +
+  scale_x_continuous(NULL) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  # remove graticules
+  coord_sf(datum = NA) +
+  theme_void()
+
+### Dot Density Maps----
+#continuar de https://atlan.com/courses/introduction-to-gis-r/lesson3-static-maps/
 
