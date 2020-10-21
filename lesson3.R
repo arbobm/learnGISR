@@ -15,6 +15,8 @@
 # install.packages("geofacet")
 # install.packages("ggrepael")
 # install.packages("stringr")
+# install.packages("geofacet")
+
 
 ### Resources on Visualizing Geospatial Data----
 
@@ -47,6 +49,10 @@ library(sf)
 simp_sf <- readRDS("simp_sf.rds")
 plot(simp_sf) # produce a grid of faceted plots, one for each attribute.
 plot(simp_sf['pop_2011'])
+ 
+# The .rds file format is usually smaller than its text file counterpart and will therefore take up less storage space.
+# The .rds file will also preserve data types and classes such as factors and dates eliminating the need to redefine 
+# data types after loading the file.
 
 # it is quick and easy to plot base maps
 # there are reasons why this default choropleth may not be an effective visualization.
@@ -67,11 +73,11 @@ library(dplyr)
 colnames(simp_sf)
 simp_sf %>% 
   filter(!state_ut %in% c("Andaman & Nicobar Islands", "Lakshadweep")) %>% 
-  tm_shape() +
-  tm_fill(col = "pop_2011", title = "No. People") +
-  tm_borders(lwd = 0.5) +
-  tm_text("abb", size = 0.5) +
-  tm_style("gray") +
+  tm_shape() + # Creates a tmap-element that specifies a spatial data object, which we refer to as shape. 
+  tm_fill(col = "pop_2011", title = "No. People") + # qual coluna vai na legenda
+  tm_borders(lwd = 0.5) + # espessura das linhas do shape
+  tm_text("abb", size = 0.5) + # coluna que define os labels dos estados
+  tm_style("gray") + # estilos predefinidos para as cores do mapa. ver ?tm_style para mais
   tm_layout(
     main.title = "Population (2011)",
     main.title.position = c("center"),
@@ -91,6 +97,8 @@ states_sf <- simp_sf %>%
   filter(!type == "Union Territory")
 View(states_sf)
 unique(simp_sf$type)
+unique(states_sf$type)
+
 
 growth <- tm_shape(states_sf) +
   tm_fill(col = "decadal_growth", title = "Percentage") +
@@ -333,5 +341,94 @@ proj_sf %>%
   theme_void()
 
 ### Dot Density Maps----
-#continuar de https://atlan.com/courses/introduction-to-gis-r/lesson3-static-maps/
+ 
+# A dot density map can be an effective tool to spatially visualize count data, particularly when your goal is to 
+# find clusters and regional patterns instead of exact data values. 
+
+# we depart from a tidy data format and 
+# gather() urban and rural population data. Then we use the 
+# st_sample() function to draw sample points based on the respective urban and rural population data for each observation. 
+
+library(tidyr)
+library(purrr)
+
+# save geometry
+proj_geometry <- proj_sf %>% 
+  select(state_ut)
+
+# gather data and rejoin geometry
+pop_gathered <- proj_sf %>% 
+  st_set_geometry(NULL) %>% 
+  select(state_ut, rural_pop, urban_pop) %>% 
+  gather(key = "pop", value = "count", -state_ut) %>% 
+  arrange(state_ut) %>% 
+  left_join(proj_geometry) %>% 
+  st_as_sf()
+
+# create a list of urban and rural populations
+pop_split <- pop_gathered %>% # objeto com duas listas :D
+  split(.$pop)
+
+# draw 1 dot per 1 lakh people
+generate_samples <- function(data) {
+  st_sample(data, size = round(data$count / 1e5))
+}
+
+# generate samples for each and combine
+points <- map(pop_split, generate_samples)
+points <- imap(points, ~st_sf(tibble(
+  pop = rep(.y, length(.x))),
+  geometry = .x))
+points <- do.call(rbind, points)
+
+# group points into multipoints
+points <- points %>% 
+  group_by(pop) %>% 
+  summarise()
+
+# plot with ggplot
+points %>% 
+  ggplot() +
+  geom_sf(data = simp_sf) +
+  geom_sf(aes(color = pop, fill = pop),
+          size = 0.1, alpha = 0.4) +
+  scale_fill_discrete("Population", labels = c("Rural", "Urban")) +
+  labs(
+    title = "Density of India's Urban and Rural Population (2011)",
+    caption = "1 dot = 1 lakh people"
+  ) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  coord_sf(datum = NA) +
+  theme_void() +
+  guides(color = FALSE)
+
+### Cartograms and Hexbin Maps----
+
+# ver mais em https://atlan.com/courses/introduction-to-gis-r/lesson3-static-maps/
+
+### Geofaceted Plots----
+
+# geofaceted plot sacrifices exact spatial characteristics in favor of a loose spatial arrangement. 
+# It strongly prioritizes accurate presentation of the attribute data at obvious cost to the geospatial representation. 
+
+library(geofacet) # makes it easy to design a custom grid and use it to facet data across the grid.
+
+simp_df <- simp_sf %>%
+  st_set_geometry(NULL) %>% 
+  select(state_ut, urban_pop, rural_pop) %>% 
+  gather(Type, pop_value, -state_ut) %>% 
+  mutate(Type = ifelse(Type == "urban_pop", "Urban", "Rural"))
+
+ggplot(simp_df,
+       aes(x = Type, y = pop_value / 1e6, fill = Type)) +
+  geom_col() +
+  facet_geo(~ state_ut, grid = "india_grid2", label = "code") +
+  labs(
+    title = "Urban and Rural Populations Across States/UTs (2011)",
+    caption = "Data Source: Wikipedia",
+    x = "",
+    y = "Population (Millions)"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
