@@ -405,6 +405,96 @@ points %>%
 ### Cartograms and Hexbin Maps----
 
 # ver mais em https://atlan.com/courses/introduction-to-gis-r/lesson3-static-maps/
+library(cartogram)
+
+ccart_gdp_sf <- cartogram_cont(proj_sf, "nominal_gdp_usd")
+
+gdp_ccart <- ccart_gdp_sf %>%
+  filter(!state_ut == "Andaman & Nicobar Islands") %>%  
+  tm_shape() +
+  tm_polygons("nominal_gdp_usd", title = "Nominal GDP (USD)", 
+              palette = "Greens") +
+  tm_layout(
+    main.title = "Area Distorted by Nominal GDP",
+    main.title.position = c("left"),
+    main.title.size = 1,
+    legend.position = c("right", "bottom")
+  )
+
+gdp_original <- proj_sf %>% 
+  filter(!state_ut == "Andaman & Nicobar Islands") %>% 
+  tm_shape() +
+  tm_polygons(col = "nominal_gdp_usd", title = "Nominal GDP (USD)", 
+              palette = "Greens") +
+  tm_layout(
+    main.title = "Nominal GDP",
+    main.title.position = c("left"),
+    main.title.size = 1,
+    legend.position = c("right", "bottom")
+  )
+
+tmap_arrange(gdp_original, gdp_ccart)
+
+ncart_gdp_sf <- cartogram_ncont(proj_sf, "nominal_gdp_usd")
+dorling_gdp_sf <- cartogram_dorling(proj_sf, "nominal_gdp_usd")
+
+gdp_ncart <- ncart_gdp_sf %>%
+  filter(!state_ut == "Andaman & Nicobar Islands") %>%  
+  tm_shape() +
+  tm_polygons("nominal_gdp_usd", title = "Nominal GDP (USD)", 
+              palette = "Greens") +
+  tm_layout(
+    main.title = "Non-Continuous Cartogram",
+    main.title.position = c("left"),
+    main.title.size = 1,
+    legend.position = c("right", "bottom")
+  )
+
+gdp_dorling <- dorling_gdp_sf %>%
+  filter(!state_ut == "Andaman & Nicobar Islands") %>%  
+  tm_shape() +
+  tm_polygons("nominal_gdp_usd", title = "Nominal GDP (USD)", 
+              palette = "Greens") +
+  tm_text("abb", size = 0.5) +
+  tm_layout(
+    main.title = "Dorling Cartogram",
+    main.title.position = c("left"),
+    main.title.size = 1,
+    legend.position = c("right", "bottom")
+  )
+
+tmap_arrange(gdp_ncart, gdp_dorling)
+
+#### Hexbin Maps----
+
+library(geogrid) # devtools::install_github("jbaileyh/geogrid")
+
+# # test possible grids before selecting seed
+# par(mfrow = c(3, 3), mar = c(0, 0, 2, 0))
+# for (i in 1:9) {
+#     new_cells <- calculate_grid(shape = proj_sf,
+#                               grid_type = "hexagonal", seed = i)
+#     plot(new_cells, main = paste("Seed", i, sep = " "))
+# }
+# 
+# new_cells_hex <- calculate_grid(shape = proj_sf, 
+#                                 grid_type = "hexagonal", seed = 1)
+# hex_result <- assign_polygons(proj_sf, new_cells_hex)
+ 
+# assign_polygons generates V1 V2 which are center coordinates of tiles
+ggplot(hex_result) +
+  geom_sf(aes(fill = per_capita_gdp_usd)) +
+  geom_text(aes(x = V1, y = V2, 
+                label = abb), size = 2, colour = "white") +
+  scale_fill_viridis_c("Per Capita GDP\n(USD$)", labels = scales::dollar) +
+  labs(
+    title = "Hexbin Map of Per Capita GDP",
+    caption = "Data Source: Wikipedia"
+  ) +
+  coord_sf(datum = NA) +
+  theme_void() +
+  guides(size = FALSE)
+
 
 ### Geofaceted Plots----
 
