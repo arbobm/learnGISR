@@ -325,4 +325,26 @@ bscols(
 
 ### Mapping Applications in Shiny----
 
-#https://atlan.com/courses/introduction-to-gis-r/lesson4-animated-interactive-maps/
+#The Basics of Shiny Apps
+
+## Essentially, Shiny apps have two parts: a front end and a back end. When creating a 
+## Shiny app, you can choose to build it as a single file (in which case, the front end 
+## and back end are housed in two functions, ui() and server()) or two files (in which case, 
+## the front end and back end are found in separate files, ui.R and server.R). 
+
+## ui.R controls the app’s appearance
+## server.R contains the logic that transforms a list of user inputs, such as dropdown 
+## menus or radio buttons, into various kinds of outputs, like plots or tables. 
+
+## Beyond these minimum two files, larger projects often involve a few other important 
+## components. One is a separate data folder that holds all of the data read into the app. 
+## Another is a file, perhaps named global.R, that reads in data files, sets global variables, 
+## and contains functions to be used in server.R. 
+
+## Lastly, you might add a styles.css file for custom styling. I chose to add 
+## includeCSS(styles.css) inside the header tag within my ui.R file. This allowed us to
+## override any of the app’s default styling in a separate file without distracting from 
+## the structure of ui.R. 
+
+
+
