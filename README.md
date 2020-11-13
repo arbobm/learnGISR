@@ -42,7 +42,22 @@ Bhaskar V. Karambelkar’s [tutorial](https://bhaskarvk.github.io/user2017.geoda
 [`tmap` documentation](https://github.com/mtennekes/tmap)
 
 [Cartography Guide - A short, friendly guide to basic principles of map design](https://www.axismaps.com/guide/)
+
 [sf - 1. Simple Features for R](https://r-spatial.github.io/sf/articles/sf1.html)
+
+[Using Shiny to Explore Electricity, Latrine & Water Access in India](https://humansofdata.atlan.com/2019/01/shiny-electricity-latrine-water-india/)
+
+[Using Leaflet with Shiny](https://rstudio.github.io/leaflet/shiny.html)
+
+[Leaflet for R](https://rstudio.github.io/leaflet/)
+
+[A Beginner’s Exploration of Shiny and Leaflet for Interactive Mapping](https://blogs.oracle.com/datascience/a-beginner%e2%80%99s-exploration-of-shiny-and-leaflet-for-interactive-mapping)
+
+[Sometimes You Want To Create Nice Diagrams - Why Not Do That With R?](http://rich-iannone.github.io/DiagrammeR/)
+
+[sf geometrical operations](https://rpubs.com/sogletr/sf-ops)
+
+[Topological relations](http://www.gitta.info/SpatialQueries/en/html/TopoBasedOps_learningObject1.html)
 
 # Resumo copiado de [introduction-to-gis-r Lesson 2](https://atlan.com/courses/introduction-to-gis-r/lesson2-manipulating-geospatial-data/)
 
