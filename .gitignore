@@ -2,6 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-
 # arquivos que podem ser refeitos rodando o script
 nom_gdp_anim.gif
