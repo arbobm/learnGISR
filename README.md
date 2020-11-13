@@ -42,6 +42,7 @@ Bhaskar V. Karambelkar’s [tutorial](https://bhaskarvk.github.io/user2017.geoda
 [`tmap` documentation](https://github.com/mtennekes/tmap)
 
 [Cartography Guide - A short, friendly guide to basic principles of map design](https://www.axismaps.com/guide/)
+[sf - 1. Simple Features for R](https://r-spatial.github.io/sf/articles/sf1.html)
 
 # Resumo copiado de [introduction-to-gis-r Lesson 2](https://atlan.com/courses/introduction-to-gis-r/lesson2-manipulating-geospatial-data/)
 
